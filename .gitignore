@@ -20,3 +20,21 @@ buildNumber.properties
 .idea
 
 **/.gitignore
+
+# renren-fast-vue
+/renren-fast-vue/.DS_Store
+/renren-fast-vue/node_modules/
+/renren-fast-vue/dist/
+/renren-fast-vue/npm-debug.log*
+/renren-fast-vue/yarn-debug.log*
+/renren-fast-vue/yarn-error.log*
+/renren-fast-vue//test/unit/coverage/
+/renren-fast-vue//test/e2e/reports/
+/renren-fast-vue/selenium-debug.log
+# renren-fast-vue  Editor directories and files
+/renren-fast-vue/.idea
+/renren-fast-vue/.vscode
+/renren-fast-vue/*.suo
+/renren-fast-vue/*.ntvs*
+/renren-fast-vue/*.njsproj
+/renren-fast-vue/*.sln
