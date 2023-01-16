@@ -11,3 +11,19 @@ spring:
           uri: http://huoxinwl.cn
           predicates:
             - Query=url,qq
+
+        - id: admin_route
+          uri: lb://renren-fast
+          predicates:
+            - Path=/api/**
+          filters:
+            - RewritePath=/api/(?<segment>.*),/renren-fast/$\{segment}
+        ## 前端项目，/api
+        ## http://localhost:88/api/captcha.jpg  http://localhost:8080/renren-fast/captcha.jpg
+
+        - id: admin_route
+          uri: lb://renren-fast
+          predicates:
+            - Path=/api/**
+          filters:
+            - RewritePath=/api/(?<segment>.*),/renren-fast/$\{segment}
