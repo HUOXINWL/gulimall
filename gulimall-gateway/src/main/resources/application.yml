@@ -20,6 +20,13 @@ spring:
             - RewritePath=/api/(?<segment>.*),/$\{segment}
             ## http://localhost:88/api/product/category/list/tree http://localhost:10000/product/category/list/tree
 
+        - id: third_party_route
+          uri: lb://gulimall-third-party
+          predicates:
+            - Path=/api/thirdparty/**
+          filters:
+            - RewritePath=/api/thirdparty(?<segment>.*),/$\{segment}
+
         - id: admin_route
           uri: lb://renren-fast
           predicates:

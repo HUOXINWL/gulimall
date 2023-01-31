@@ -19,6 +19,6 @@ mybatis-plus:
 server:
   port: 10000
 
-logging:
-  level:
-    cn.huoxinwl.gulimall: debug
+#logging:
+#  level:
+#    cn.huoxinwl.gulimall: debug
