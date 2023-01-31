@@ -51,9 +51,9 @@
           name: '',
           logo: '',
           descript: '',
-          showStatus: '',
+          showStatus: 0,
           firstLetter: '',
-          sort: ''
+          sort: 1
         },
         dataRule: {
           name: [
@@ -69,10 +69,26 @@
             { required: true, message: '显示状态[0-不显示；1-显示]不能为空', trigger: 'blur' }
           ],
           firstLetter: [
-            { required: true, message: '检索首字母不能为空', trigger: 'blur' }
+            { validator: (rule,value,callback) => {
+              if(value == ''){
+                callback(new Error("首字母必须填写"))
+              }else if(!/^[a-zA-Z]$/.test(value)){
+                callback(new Error("首字母必须a-z或者A-Z之间"));
+              } else {
+                callback();
+              }
+            }, trigger: 'blur' }
           ],
           sort: [
-            { required: true, message: '排序不能为空', trigger: 'blur' }
+            { validator: (rule, value, callback) => {
+              if (value == "") {
+                callback(new Error("排序字段必须填写"));
+              } else if (!/^([1-9]{1,2}|100)$/.test(value)) {
+                callback(new Error("排序必须是一个大于等于0的整数"));
+              } else {
+                callback();
+              }
+            }, trigger: 'blur' }
           ]
         }
       }

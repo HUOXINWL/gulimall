@@ -1,10 +1,12 @@
 package cn.huoxinwl.gulimall.product.controller;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +18,8 @@ import cn.huoxinwl.gulimall.product.service.BrandService;
 import cn.huoxinwl.common.utils.PageUtils;
 import cn.huoxinwl.common.utils.R;
 
+import javax.validation.Valid;
+import javax.xml.ws.BindingType;
 
 
 /**
@@ -59,10 +63,21 @@ public class BrandController {
      */
     @RequestMapping("/save")
     //@RequiresPermissions("product:brand:save")
-    public R save(@RequestBody BrandEntity brand){
-		brandService.save(brand);
+    public R save(@Valid @RequestBody BrandEntity brand, BindingResult result){
+        if (result.hasErrors()){
+            Map<String,String> map = new HashMap<>();
+            //1. 获取校验的错误结果
+            result.getFieldErrors().forEach((item)->{
+                String msg = item.getDefaultMessage();
+                String field = item.getField();
+                map.put(field,msg);
+            });
 
-        return R.ok();
+            return R.error(400,"提交的数据不合法").put("data",map);
+        }else {
+            brandService.save(brand);
+            return R.ok();
+        }
     }
 
     /**
