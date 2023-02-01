@@ -3,6 +3,7 @@ package cn.huoxinwl.gulimall.product.entity;
 import cn.huoxinwl.common.valid.AddGroup;
 import cn.huoxinwl.common.valid.ListValue;
 import cn.huoxinwl.common.valid.UpdateGroup;
+import cn.huoxinwl.common.valid.UpdateStatusGroup;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
@@ -50,7 +51,8 @@ public class BrandEntity implements Serializable {
 	/**
 	 * 显示状态[0-不显示；1-显示]
 	 */
-	@ListValue(vals={0,1},groups = {AddGroup.class})
+	@NotNull(groups = {AddGroup.class, UpdateStatusGroup.class})
+	@ListValue(vals={0,1},groups = {AddGroup.class, UpdateStatusGroup.class})
 	private Integer showStatus;
 	/**
 	 * 检索首字母

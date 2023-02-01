@@ -21,6 +21,9 @@ import java.util.Map;
 //@ResponseBody
 @RestControllerAdvice(basePackages = "cn.huoxinwl.gulimall.product.controller")
 public class GulimallExceptionControllerAdvice {
+    /**
+     * 捕获定义的异常
+     */
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     public R handleValidException(MethodArgumentNotValidException e){
         log.error("数据校验出现问题{}，异常类型：{}",e.getMessage(),e.getClass());
@@ -34,10 +37,12 @@ public class GulimallExceptionControllerAdvice {
         return R.error(BizCodeEnum.VALID_EXCEPTION.getCode(), BizCodeEnum.VALID_EXCEPTION.getMsg()).put("data",errorMap);
     }
 
+    /**
+     * 兜底异常
+     */
     @ExceptionHandler(value = Throwable.class)
     public R handleException(Throwable throwable){
         log.error("错误：",throwable);
         return R.error(BizCodeEnum.UNKNOW_EXCEPTION.getCode(),BizCodeEnum.UNKNOW_EXCEPTION.getMsg());
     }
-
 }
