@@ -1,5 +1,6 @@
 package cn.huoxinwl.gulimall.product.service.impl;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import java.util.Map;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -18,9 +19,16 @@ public class BrandServiceImpl extends ServiceImpl<BrandDao, BrandEntity> impleme
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
+        // 1、获取key
+        String key = (String) params.get("key");
+        QueryWrapper<BrandEntity> wrapper = new QueryWrapper<>();
+        // key不为空 brand_id 和 name 进行值匹配
+        if (!StringUtils.isEmpty(key)) {
+            wrapper.eq("brand_id",key).or().like("name",key);
+        }
         IPage<BrandEntity> page = this.page(
                 new Query<BrandEntity>().getPage(params),
-                new QueryWrapper<BrandEntity>()
+                wrapper
         );
 
         return new PageUtils(page);
