@@ -1,5 +1,6 @@
 package cn.huoxinwl.gulimall.product.service;
 
+import cn.huoxinwl.gulimall.product.vo.AttrRespVo;
 import cn.huoxinwl.gulimall.product.vo.AttrVo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import cn.huoxinwl.common.utils.PageUtils;
@@ -21,5 +22,9 @@ public interface AttrService extends IService<AttrEntity> {
     void saveAttr(AttrVo attr);
 
     PageUtils queryBaseAttrPage(Map<String, Object> params, Long catelogId);
+
+    AttrRespVo getAttrInfo(Long attrId);
+
+    void updateAttr(AttrRespVo attr);
 }
 
