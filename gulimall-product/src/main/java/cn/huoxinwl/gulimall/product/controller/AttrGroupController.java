@@ -1,16 +1,17 @@
 package cn.huoxinwl.gulimall.product.controller;
 
+import java.security.PublicKey;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
+import cn.huoxinwl.gulimall.product.entity.AttrEntity;
+import cn.huoxinwl.gulimall.product.service.AttrService;
 import cn.huoxinwl.gulimall.product.service.CategoryService;
+import cn.huoxinwl.gulimall.product.vo.AttrGroupRelationVo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import cn.huoxinwl.gulimall.product.entity.AttrGroupEntity;
 import cn.huoxinwl.gulimall.product.service.AttrGroupService;
@@ -34,7 +35,21 @@ public class AttrGroupController {
 
     @Autowired
     private CategoryService categoryService;
+    @Autowired
+    private AttrService attrService;
 
+    ///product/attrgroup/{attrgroupId}/attr/relation
+    @GetMapping("/{attrgroupId}/attr/relation")
+    public R attrRelation(@PathVariable("attrgroupId")Long attrgroupId){
+        List<AttrEntity> entityList = attrService.getRelationAttr(attrgroupId);
+        return R.ok().put("data",entityList);
+    }
+
+    @PostMapping("/attr/relation/delete")
+    public R deleteRelation(@RequestBody AttrGroupRelationVo[] vos){
+        attrService.deleteRelations(vos);
+        return R.ok();
+    }
     /**
      * 列表
      */
