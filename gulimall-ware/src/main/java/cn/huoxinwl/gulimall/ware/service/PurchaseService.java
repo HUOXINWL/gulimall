@@ -1,5 +1,6 @@
 package cn.huoxinwl.gulimall.ware.service;
 
+import cn.huoxinwl.gulimall.ware.vo.MergeVo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import cn.huoxinwl.common.utils.PageUtils;
 import cn.huoxinwl.gulimall.ware.entity.PurchaseEntity;
@@ -16,5 +17,9 @@ import java.util.Map;
 public interface PurchaseService extends IService<PurchaseEntity> {
 
     PageUtils queryPage(Map<String, Object> params);
+
+    PageUtils queryPageUnreceive(Map<String, Object> params);
+
+    void mergePurchase(MergeVo mergeVo);
 }
 
