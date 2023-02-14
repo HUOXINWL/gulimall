@@ -4,6 +4,12 @@ spring:
     password: mysql.
     url: jdbc:mysql://hxwl:3306/gulimall_wms
     driver-class-name: com.mysql.jdbc.Driver
+  application:
+    name: gulimall-ware
+  cloud:
+    nacos:
+      discovery:
+        server-addr: hxwl:8848
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
   global-config:
@@ -12,3 +18,6 @@ mybatis-plus:
 
 server:
   port: 11000
+logging:
+  level:
+    cn.huoxinwl.gulimall.ware: debug
