@@ -1,9 +1,12 @@
 package cn.huoxinwl.gulimall.product.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
+import cn.huoxinwl.gulimall.product.entity.ProductAttrValueEntity;
+import cn.huoxinwl.gulimall.product.service.ProductAttrValueService;
 import cn.huoxinwl.gulimall.product.vo.AttrRespVo;
 import cn.huoxinwl.gulimall.product.vo.AttrVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +31,21 @@ import cn.huoxinwl.common.utils.R;
 public class AttrController {
     @Autowired
     private AttrService attrService;
+    @Autowired
+    private ProductAttrValueService productAttrValueService;
 
+    @GetMapping("/base/listforspu/{spuId}")
+    public R baseAttrlistforspu(@PathVariable("spuId")Long spuId){
+        List<ProductAttrValueEntity> entities = productAttrValueService.baseAttrlistforspu(spuId);
+        return R.ok().put("data",entities);
+    }
+
+    @PostMapping("/update/{spuId}")
+    public R updateSpuAttr(@PathVariable("spuId")Long spuId,
+                           @RequestBody List<ProductAttrValueEntity> entities){
+        productAttrValueService.updateSpuAttr(spuId,entities);
+        return R.ok();
+    }
 
     ///product/attr/sale/list/0
     ///base/list/{catelogId}
