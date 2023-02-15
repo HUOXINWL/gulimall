@@ -7,11 +7,12 @@
 	<version>1.0.0</version>
 	<packaging>jar</packaging>
 	<description>renren-generator</description>
-	<parenringt>
+	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.2.6.RELEASE</version>
-	</parenringt>
+		<version>2.1.8.RELEASE</version>
+		<relativePath ></relativePath>
+	</parent>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
