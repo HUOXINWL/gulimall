@@ -6,12 +6,11 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -125,9 +124,89 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         Map<String, List<Catelog2Vo>> result = JSON.parseObject(catalogJSON, new TypeReference<Map<String, List<Catelog2Vo>>>(){});
         return result;
     }
-    //@Override
-    public Map<String, List<Catelog2Vo>> getCatalogJsonFromDB() {
-        //将数据库的多次查询变为一次
+
+    /**
+     * 从数据库查询并封装数据::分布式锁
+     * @return
+     */
+    public Map<String, List<Catelog2Vo>> getCatalogJsonFromDbWithRedisLock() {
+
+        //1、占分布式锁。去redis占坑      设置过期时间必须和加锁是同步的，保证原子性（避免死锁）
+        String uuid = UUID.randomUUID().toString();
+        Boolean lock = stringRedisTemplate.opsForValue().setIfAbsent("lock", uuid,300, TimeUnit.SECONDS);
+        if (lock) {
+            System.out.println("获取分布式锁成功...");
+            Map<String, List<Catelog2Vo>> dataFromDb = null;
+            try {
+                //加锁成功...执行业务
+                dataFromDb = getDataFromDb();
+            } finally {
+                String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+
+                //删除锁
+                stringRedisTemplate.execute(new DefaultRedisScript<Long>(script, Long.class), Arrays.asList("lock"), uuid);
+
+            }
+            //先去redis查询下保证当前的锁是自己的
+            //获取值对比，对比成功删除=原子性 lua脚本解锁
+            // String lockValue = stringRedisTemplate.opsForValue().get("lock");
+            // if (uuid.equals(lockValue)) {
+            //     //删除我自己的锁
+            //     stringRedisTemplate.delete("lock");
+            // }
+
+            return dataFromDb;
+        } else {
+            System.out.println("获取分布式锁失败...等待重试...");
+            //加锁失败...重试机制
+            //休眠一百毫秒
+            try { TimeUnit.MILLISECONDS.sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
+            return getCatalogJsonFromDbWithRedisLock();     //自旋的方式
+        }
+    }
+
+
+    /**
+     * 从数据库查询并封装数据::本地锁
+     * @return
+     */
+    public Map<String, List<Catelog2Vo>> getCatalogJsonFromDbWithLocalLock() {
+
+        // //如果缓存中有就用缓存的
+        // Map<String, List<Catelog2Vo>> catalogJson = (Map<String, List<Catelog2Vo>>) cache.get("catalogJson");
+        // if (cache.get("catalogJson") == null) {
+        //     //调用业务
+        //     //返回数据又放入缓存
+        // }
+
+        //只要是同一把锁，就能锁住这个锁的所有线程
+        //1、synchronized (this)：SpringBoot所有的组件在容器中都是单例的。
+        //TODO 本地锁：synchronized，JUC（Lock),在分布式情况下，想要锁住所有，必须使用分布式锁
+        synchronized (this) {
+
+            //得到锁以后，我们应该再去缓存中确定一次，如果没有才需要继续查询
+            return getDataFromDb();
+        }
+
+
+    }
+
+    private Map<String, List<Catelog2Vo>> getDataFromDb() {
+        //得到锁以后，我们应该再去缓存中确定一次，如果没有才需要继续查询
+        String catalogJson = stringRedisTemplate.opsForValue().get("catalogJson");
+        if (!StringUtils.isEmpty(catalogJson)) {
+            //缓存不为空直接返回
+            Map<String, List<Catelog2Vo>> result = JSON.parseObject(catalogJson, new TypeReference<Map<String, List<Catelog2Vo>>>() {
+            });
+
+            return result;
+        }
+
+        System.out.println("查询了数据库");
+
+        /**
+         * 将数据库的多次查询变为一次
+         */
         List<CategoryEntity> selectList = this.baseMapper.selectList(null);
 
         //1、查出所有分类
@@ -147,6 +226,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
                     //1、找当前二级分类的三级分类封装成vo
                     List<CategoryEntity> level3Catelog = getParent_cid(selectList, l2.getCatId());
+
                     if (level3Catelog != null) {
                         List<Catelog2Vo.Category3Vo> category3Vos = level3Catelog.stream().map(l3 -> {
                             //2、封装成指定格式
@@ -163,6 +243,10 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
             return catelog2Vos;
         }));
+
+        //3、将查到的数据放入缓存,将对象转为json
+        String valueJson = JSON.toJSONString(parentCid);
+        stringRedisTemplate.opsForValue().set("catalogJson", valueJson, 1, TimeUnit.DAYS);
 
         return parentCid;
     }
