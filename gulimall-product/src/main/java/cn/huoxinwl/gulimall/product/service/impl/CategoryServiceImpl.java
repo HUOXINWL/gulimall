@@ -4,6 +4,9 @@ import cn.huoxinwl.gulimall.product.service.CategoryBrandRelationService;
 import cn.huoxinwl.gulimall.product.vo.Catelog2Vo;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import org.redisson.api.RLock;
+import org.redisson.api.RReadWriteLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -33,6 +36,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
     private CategoryBrandRelationService categoryBrandRelationService;
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+    @Autowired
+    private RedissonClient redissonClient;
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
         IPage<CategoryEntity> page = this.page(
@@ -113,16 +118,51 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         String catalogJSON = stringRedisTemplate.opsForValue().get("catalogJSON");
         if (StringUtils.isEmpty(catalogJSON)){
             //2. 缓存中没有，查询数据库
-            Map<String, List<Catelog2Vo>> catalogJsonFromDB = getCatalogJsonFromDB();
-            //3. 查到的数据再放入缓存，将对象转为json放在缓存中
-            String s = JSON.toJSONString(catalogJsonFromDB);
-            stringRedisTemplate.opsForValue().set("catalogJSON",s);
+            Map<String, List<Catelog2Vo>> catalogJsonFromDB = getCatalogJsonFromDbWithRedissonLock();
+
             return catalogJsonFromDB;
         }
 
         //转为我们指定的对象
         Map<String, List<Catelog2Vo>> result = JSON.parseObject(catalogJSON, new TypeReference<Map<String, List<Catelog2Vo>>>(){});
         return result;
+    }
+
+    /**
+     * 缓存里的数据如何和数据库的数据保持一致？？
+     * 缓存数据一致性
+     * 1)、双写模式
+     * 2)、失效模式
+     * @return
+     */
+    public Map<String, List<Catelog2Vo>> getCatalogJsonFromDbWithRedissonLock() {
+
+        //1、占分布式锁。去redis占坑
+        //（锁的粒度，越细越快:具体缓存的是某个数据，11号商品） product-11-lock
+        //RLock catalogJsonLock = redissonClient.getLock("catalogJson-lock");
+        //创建读锁
+        RReadWriteLock readWriteLock = redissonClient.getReadWriteLock("catalogJson-lock");
+
+        RLock rLock = readWriteLock.readLock();
+
+        Map<String, List<Catelog2Vo>> dataFromDb = null;
+        try {
+            rLock.lock();
+            //加锁成功...执行业务
+            dataFromDb = getDataFromDb();
+        } finally {
+            rLock.unlock();
+        }
+        //先去redis查询下保证当前的锁是自己的
+        //获取值对比，对比成功删除=原子性 lua脚本解锁
+        // String lockValue = stringRedisTemplate.opsForValue().get("lock");
+        // if (uuid.equals(lockValue)) {
+        //     //删除我自己的锁
+        //     stringRedisTemplate.delete("lock");
+        // }
+
+        return dataFromDb;
+
     }
 
     /**
