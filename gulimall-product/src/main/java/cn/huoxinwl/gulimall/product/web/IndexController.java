@@ -3,16 +3,14 @@ package cn.huoxinwl.gulimall.product.web;
 import cn.huoxinwl.gulimall.product.entity.CategoryEntity;
 import cn.huoxinwl.gulimall.product.service.CategoryService;
 import cn.huoxinwl.gulimall.product.vo.Catelog2Vo;
-import org.redisson.api.RLock;
-import org.redisson.api.RReadWriteLock;
-import org.redisson.api.RSemaphore;
-import org.redisson.api.RedissonClient;
+import org.redisson.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -166,5 +164,31 @@ public class IndexController {
         RSemaphore park = redisson.getSemaphore("park");
         park.release();     //释放一个车位
         return "ok";
+    }
+
+
+    /**
+     * 放假、锁门
+     * 1班没人了
+     * 5个班，全部走完，我们才可以锁大门
+     * 分布式闭锁
+     */
+    @GetMapping(value = "/lockDoor")
+    @ResponseBody
+    public String lockDoor() throws InterruptedException {
+        RCountDownLatch door = redisson.getCountDownLatch("door");
+        door.trySetCount(5);
+        door.await();       //等待闭锁完成
+
+        return "放假了...";
+    }
+
+    @GetMapping(value = "/gogogo/{id}")
+    @ResponseBody
+    public String gogogo(@PathVariable("id") Long id) {
+        RCountDownLatch door = redisson.getCountDownLatch("door");
+        door.countDown();       //计数-1
+
+        return id + "班的人都走了...";
     }
 }
