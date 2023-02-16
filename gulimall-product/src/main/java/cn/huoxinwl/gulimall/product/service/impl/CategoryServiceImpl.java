@@ -2,7 +2,10 @@ package cn.huoxinwl.gulimall.product.service.impl;
 
 import cn.huoxinwl.gulimall.product.service.CategoryBrandRelationService;
 import cn.huoxinwl.gulimall.product.vo.Catelog2Vo;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -21,6 +24,7 @@ import cn.huoxinwl.gulimall.product.dao.CategoryDao;
 import cn.huoxinwl.gulimall.product.entity.CategoryEntity;
 import cn.huoxinwl.gulimall.product.service.CategoryService;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 
 @Service("categoryService")
@@ -28,6 +32,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Autowired
     private CategoryBrandRelationService categoryBrandRelationService;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
         IPage<CategoryEntity> page = this.page(
@@ -89,8 +95,38 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         return categoryEntities;
     }
 
+    /**
+     * TODO 产生堆外内存溢出 OutOfDirectMemoryError
+     * 1、SpringBoot2.0以后默认使用 Lettuce作为操作redis的客户端，它使用 netty进行网络通信
+     * 2、lettuce 的bug导致netty堆外内存溢出，-Xmx300m netty 如果没有指定堆内存移除，默认使用 -Xmx300m
+     *      可以通过-Dio.netty.maxDirectMemory 进行设置
+     *   解决方案 不能使用 -Dio.netty.maxDirectMemory调大内存
+     *   1、升级 lettuce客户端，2、 切换使用jedis
+     *   redisTemplate:
+     *   lettuce、jedis 操作redis的底层客户端，Spring再次封装
+     * @return
+     */
     @Override
-    public Map<String, List<Catelog2Vo>> getCatalogJson() {
+    public Map<String, List<Catelog2Vo>> getCatalogJson(){
+        //给缓存中放json字符串，拿出的json字符串还要逆转为能用的对象类型【序列化与反序列化】
+
+        //1. 加入缓存逻辑，缓存中村的数据是json字符串
+        String catalogJSON = stringRedisTemplate.opsForValue().get("catalogJSON");
+        if (StringUtils.isEmpty(catalogJSON)){
+            //2. 缓存中没有，查询数据库
+            Map<String, List<Catelog2Vo>> catalogJsonFromDB = getCatalogJsonFromDB();
+            //3. 查到的数据再放入缓存，将对象转为json放在缓存中
+            String s = JSON.toJSONString(catalogJsonFromDB);
+            stringRedisTemplate.opsForValue().set("catalogJSON",s);
+            return catalogJsonFromDB;
+        }
+
+        //转为我们指定的对象
+        Map<String, List<Catelog2Vo>> result = JSON.parseObject(catalogJSON, new TypeReference<Map<String, List<Catelog2Vo>>>(){});
+        return result;
+    }
+    //@Override
+    public Map<String, List<Catelog2Vo>> getCatalogJsonFromDB() {
         //将数据库的多次查询变为一次
         List<CategoryEntity> selectList = this.baseMapper.selectList(null);
 
