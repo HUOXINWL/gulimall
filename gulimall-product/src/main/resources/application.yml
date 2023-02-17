@@ -15,6 +15,15 @@ spring:
   redis:
     host: hxwl
     port: 6379
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000
+      #是否缓存空值，防止缓存穿透
+      cache-null-values: true
+      #如果指定了前缀就用我们指定的前缀，如果没有就默认使用缓存的名字作为前缀
+      key-prefix: CACHE_
+      use-key-prefix: true
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
   global-config:

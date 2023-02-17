@@ -8,6 +8,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RReadWriteLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -92,8 +93,26 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         categoryBrandRelationService.updateCategory(category.getCatId(),category.getName());
     }
 
+    /**
+     * 每一个需要缓存的数据我们都来指定要放到那个名字的缓存。【缓存的分区(按照业务类型分)】
+     * 代表当前方法的结果需要缓存，如果缓存中有，方法都不用调用，如果缓存中没有，会调用方法。最后将方法的结果放入缓存
+     * 默认行为
+     *      如果缓存中有，方法不再调用
+     *      key是默认生成的:缓存的名字::SimpleKey::[](自动生成key值)
+     *      缓存的value值，默认使用jdk序列化机制，将序列化的数据存到redis中
+     *      默认时间是 -1：
+     *
+     *   自定义操作：key的生成
+     *      指定生成缓存的key：key属性指定，接收一个Spel
+     *      指定缓存的数据的存活时间:配置文档中修改存活时间
+     *      将数据保存为json格式
+     *
+     * @return
+     */
+    @Cacheable(value = {"category"},key = "#root.method.name")
     @Override
     public List<CategoryEntity> getLevel1Categorys() {
+        System.out.println("getLevel1Categorys........");
         List<CategoryEntity> categoryEntities = this.baseMapper.selectList(
                 new QueryWrapper<CategoryEntity>().eq("parent_cid", 0));
         return categoryEntities;
