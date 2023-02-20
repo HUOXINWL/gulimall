@@ -1,0 +1,147 @@
+//GET gulimall_product/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "skuTitle": "华为" // 按照关键字查询
+          }
+        }
+      ],
+      "filter": [
+        {
+          "term": {
+            "catalogId": "225" // 根据分类id过滤
+          }
+        },
+        {
+          "terms": {
+            "brandId": [ // 品牌id
+              "1",
+              "5",
+              "9"
+            ]
+          }
+        },
+        {
+          "nested": { // 根据属性id 以及属性值进行过滤
+            "path": "attrs",
+            "query": {
+              "bool": {
+                "must": [
+                  {
+                    "term": {
+                      "attrs.attrId": {
+                        "value": "8"
+                      }
+                    }
+                  },
+                  {
+                    "terms": {
+                      "attrs.attrValue": [
+                        "2019"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "term": { // 是否有库存
+            "hasStock": {
+              "value": "false"
+            }
+          }
+        },
+        {
+          "range": { // 价格区间
+            "skuPrice": {
+              "gte": 0,
+              "lte": 7000
+            }
+          }
+        }
+      ]
+    }
+  },
+  "sort": [ //排序
+    {
+      "skuPrice": {
+        "order": "desc"
+      }
+    }
+  ],
+  "from": 0,
+  "size":4,
+  "highlight": { // 对搜索田间进行高亮
+    "fields": {"skuTitle": {}},
+    "pre_tags": "<b style=color:red>",
+    "post_tags": "</b>"
+  },
+  "aggs": {
+    "brand_agg": { //品牌进行聚合
+      "terms": {
+        "field": "brandId",
+        "size": 10
+      },
+      "aggs": {
+        "brand_name_agg": { // 品牌名字
+          "terms": {
+            "field": "brandName",
+            "size": 10
+          }
+        },
+        "brand_img_agg": { //品牌图片
+          "terms": {
+            "field": "brandImg",
+            "size": 10
+          }
+        }
+      }
+    },
+    "catalog_agg": { // 分类
+      "terms": {
+        "field": "catalogId",
+        "size": 10
+      },
+      "aggs": {
+        "catalog_name_agg": { //分类名字
+          "terms": {
+            "field": "catalogName",
+            "size": 10
+          }
+        }
+      }
+    },
+    "attr_agg":{
+      "nested": {
+        "path": "attrs"
+      },
+      "aggs": { //属性聚合
+        "attr_id_agg": {
+          "terms": {
+            "field": "attrs.attrId",
+            "size": 10
+          },
+          "aggs": {
+            "attr_name_agg": { //属性名字
+              "terms": {
+                "field": "attrs.attrName",
+                "size": 10
+              }
+            },
+            "attr_value_agg":{ //属性的值
+              "terms": {
+                "field": "attrs.attrValue",
+                "size": 10
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
