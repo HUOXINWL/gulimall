@@ -7,6 +7,9 @@ spring:
         server-addr: hxwl:8848
   thymeleaf:
     cache: false
+  redis:
+    host: hxwl
+    port: 6379
 
 
 server:

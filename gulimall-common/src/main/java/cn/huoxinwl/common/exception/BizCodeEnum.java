@@ -8,6 +8,7 @@ package cn.huoxinwl.common.exception;
  * 错误码列表：
  *  10: 通用
  *      001：参数格式校验
+ *      002：短信验证码频率太高
  *  11: 商品
  *  12: 订单
  *  13: 购物车
@@ -16,6 +17,7 @@ package cn.huoxinwl.common.exception;
 public enum BizCodeEnum {
     UNKNOW_EXCEPTION(10000,"系统未知异常"),
     VALID_EXCEPTION(10001,"参数格式校验失败"),
+    SMS_CODE_EXCEPTION(10002,"验证码获取频率太高，请稍后再试"),
     PRODUCT_UP_EXCEPTION(11000,"商品上架异常");
     private int code;
     private String msg;
