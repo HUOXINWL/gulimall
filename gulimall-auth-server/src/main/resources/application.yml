@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: gulimall-auth-server
+  cloud:
+    nacos:
+      discovery:
+        server-addr: hxwl:8848
+  thymeleaf:
+    cache: false
+
+
+server:
+  port: 20000
