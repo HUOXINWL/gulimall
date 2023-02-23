@@ -10,11 +10,19 @@ spring:
         server-addr: hxwl:8848
   application:
     name: gulimall-member
+  redis:
+    host: hxwl
+    port: 6379
+
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
   global-config:
     db-config:
       id-type: auto  # 自增主键
-
+  session:
+    store-type: redis
 server:
   port: 8000
+  servlet:
+    session:
+      timeout: 30m

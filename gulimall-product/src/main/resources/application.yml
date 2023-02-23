@@ -24,6 +24,9 @@ spring:
       #如果指定了前缀就用我们指定的前缀，如果没有就默认使用缓存的名字作为前缀
       # key-prefix: CACHE_
       use-key-prefix: true
+  session:
+    store-type: redis
+
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
   global-config:
@@ -34,6 +37,9 @@ mybatis-plus:
 
 server:
   port: 10000
+  servlet:
+    session:
+      timeout: 30m
 
 logging:
   level:

@@ -8,7 +8,9 @@ import cn.huoxinwl.common.exception.BizCodeEnum;
 import cn.huoxinwl.gulimall.member.exception.PhoneException;
 import cn.huoxinwl.gulimall.member.exception.UsernameException;
 import cn.huoxinwl.gulimall.member.feign.CouponFeignService;
+import cn.huoxinwl.gulimall.member.vo.MemberUserLoginVo;
 import cn.huoxinwl.gulimall.member.vo.MemberUserRegisterVo;
+import cn.huoxinwl.gulimall.member.vo.SocialUser;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -48,6 +50,31 @@ public class MemberController {
         }
 
         return R.ok();
+    }
+
+    @PostMapping(value = "/login")
+    public R login(@RequestBody MemberUserLoginVo vo) {
+
+        MemberEntity memberEntity = memberService.login(vo);
+
+        if (memberEntity != null) {
+            return R.ok().setData(memberEntity);
+        } else {
+            return R.error(BizCodeEnum.LOGINACCT_PASSWORD_EXCEPTION.getCode(),BizCodeEnum.LOGINACCT_PASSWORD_EXCEPTION.getMsg());
+        }
+    }
+
+
+    @PostMapping(value = "/oauth2/login")
+    public R oauthLogin(@RequestBody SocialUser socialUser) throws Exception {
+
+        MemberEntity memberEntity = memberService.login(socialUser);
+
+        if (memberEntity != null) {
+            return R.ok().setData(memberEntity);
+        } else {
+            return R.error(BizCodeEnum.LOGINACCT_PASSWORD_EXCEPTION.getCode(),BizCodeEnum.LOGINACCT_PASSWORD_EXCEPTION.getMsg());
+        }
     }
 
     @RequestMapping("/coupons")
