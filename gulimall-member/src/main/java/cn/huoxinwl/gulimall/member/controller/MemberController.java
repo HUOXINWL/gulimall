@@ -4,14 +4,14 @@ import java.util.Arrays;
 import java.util.Map;
 
 //import org.apache.shiro.authz.annotation.RequiresPermissions;
+import cn.huoxinwl.common.exception.BizCodeEnum;
+import cn.huoxinwl.gulimall.member.exception.PhoneException;
+import cn.huoxinwl.gulimall.member.exception.UsernameException;
 import cn.huoxinwl.gulimall.member.feign.CouponFeignService;
+import cn.huoxinwl.gulimall.member.vo.MemberUserRegisterVo;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import cn.huoxinwl.gulimall.member.entity.MemberEntity;
 import cn.huoxinwl.gulimall.member.service.MemberService;
@@ -35,6 +35,20 @@ public class MemberController {
 
     @Autowired
     private CouponFeignService couponFeignService;
+
+    @PostMapping(value = "/register")
+    public R register(@RequestBody MemberUserRegisterVo vo) {
+
+        try {
+            memberService.register(vo);
+        } catch (PhoneException e) {
+            return R.error(BizCodeEnum.PHONE_EXIST_EXCEPTION.getCode(),BizCodeEnum.PHONE_EXIST_EXCEPTION.getMsg());
+        } catch (UsernameException e) {
+            return R.error(BizCodeEnum.USER_EXIST_EXCEPTION.getCode(),BizCodeEnum.USER_EXIST_EXCEPTION.getMsg());
+        }
+
+        return R.ok();
+    }
 
     @RequestMapping("/coupons")
     public R test(){
